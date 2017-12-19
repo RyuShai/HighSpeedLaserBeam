@@ -78,7 +78,7 @@ public class UtilMatrix {
         {
             case ORANGE_BALL:
             {
-                Scalar hsv_l = new Scalar(16, 70, 87);
+                Scalar hsv_l = new Scalar(16, 80, 87);
                 Scalar hsv_h = new Scalar(24, 255, 255);
                 Core.inRange(processMat,hsv_l,hsv_h,rangeRes);
 
@@ -101,9 +101,9 @@ public class UtilMatrix {
             Rect bBox = Imgproc.boundingRect(contours.get(i));
             float ratio = (float) bBox.width/bBox.height;
             if(ratio > 1.0f) ratio = 1.0f/ratio;
-//            Log.e("Ryu", "ratio: "+ ratio + " "+bBox.area()) ;
+            Log.e("Ryu", "ratio: "+ ratio + " "+bBox.area()) ;
             //searching for bBox almost square
-            if(ratio>0.5f && bBox.area()>=400)
+            if(ratio>0.7 /*&& bBox.area()>=200*/)
             {
                 if(processMat.empty() || processMat == null){
 //                    Log.e("Ryu", "hue is empty");
@@ -131,6 +131,8 @@ public class UtilMatrix {
 
     public static void DrawRectangle(UsbService usbService, Point sendCoordinate)
     {
+        if(usbService == null)
+            return;
         if(state == 1){
             if(sendCoordinate.x < Config.MAX){
                 sendCoordinate.x += Config.moveStep;
@@ -154,8 +156,16 @@ public class UtilMatrix {
                 MoveLaser(sendCoordinate,usbService);
             }
             else  state = 1;
-
         }
+    }
+
+    public static Mat multiply(Mat a, Mat b) {
+
+        Mat ret = new Mat();
+        Log.e("Ryu","a "+ a.width() +" "+ a.height() + " b "+ b.width() +" "+ b.height());
+        Core.gemm(a, b, 1, new Mat(), 0, ret);
+        Log.e("Ryu","bb");
+        return ret;
     }
 
 }

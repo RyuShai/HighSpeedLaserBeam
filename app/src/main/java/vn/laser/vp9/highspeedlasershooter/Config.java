@@ -11,7 +11,7 @@ public class Config {
         public static final int PERMISSION_EXTERNAL_STORAGE =0;
         public static final int PERMISSION_CAMERA = 1;
         public static int MAX=4000,moveStep=1000;
-        public static long delayTimer = 3;
+        public static long delayTimer = 10;
         public static int scaleSize = 4;
 
         public enum OBJECT_COLOR{

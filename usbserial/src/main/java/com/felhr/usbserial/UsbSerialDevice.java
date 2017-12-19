@@ -302,6 +302,7 @@ public abstract class UsbSerialDevice implements UsbSerialInterface
             while(working.get())
             {
                 byte[] data = serialBuffer.getWriteBuffer();
+                if(data !=null)
                 connection.bulkTransfer(outEndpoint, data, data.length, USB_TIMEOUT);
             }
         }
