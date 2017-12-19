@@ -89,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
 
     int w=1280;
     int h=720;
-
+    int threadCount=0;
     android.graphics.Point curLaserCoordinate= new android.graphics.Point(0,0);
     //Test vairable
 
@@ -139,6 +139,7 @@ public class MainActivity extends AppCompatActivity {
 
         textureView = (AutoFitTextureView) findViewById(R.id.textureView);
 //        textureView.setRotation(270.0f);
+//        textureView = new AutoFitTextureView(this);
 
         textureView.setSurfaceTextureListener(textureListener);
 
@@ -185,31 +186,39 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-            Mat mat = new Mat();
-            Bitmap[] params = {textureView.getBitmap()};
-            Bitmap bmp32 = params[0].copy(Bitmap.Config.ARGB_8888, true);
-            Utils.bitmapToMat(bmp32, mat);
-            Imgproc.resize(mat, mat,new org.opencv.core.Size(mat.height(),mat.width()));
-            Imgproc.cvtColor(mat,mat, Imgproc.COLOR_RGB2BGR);
-            Imgproc.resize(mat, mat,new org.opencv.core.Size(mat.width()/Config.scaleSize,mat.height()/Config.scaleSize));
-            //retBall[0]: point x
-            //retBall[1]: point y
-            //retBall[2]: point radius
-            float[] retBall = UtilMatrix.DetectBall(mat,Config.OBJECT_COLOR.ORANGE_BALL);
+//            Mat mat = new Mat();
+//            Bitmap[] params = {textureView.getBitmap()};
+//            Bitmap bmp32 = params[0].copy(Bitmap.Config.ARGB_8888, true);
+//            Utils.bitmapToMat(bmp32, mat);
+//            Imgproc.resize(mat, mat,new org.opencv.core.Size(mat.height(),mat.width()));
+//            Imgproc.cvtColor(mat,mat, Imgproc.COLOR_RGB2BGR);
+//            Imgproc.resize(mat, mat,new org.opencv.core.Size(mat.width()/Config.scaleSize,mat.height()/Config.scaleSize));
+//            //retBall[0]: point x
+//            //retBall[1]: point y
+//            //retBall[2]: point radius
+//            float[] retBall = UtilMatrix.DetectBall(mat,Config.OBJECT_COLOR.ORANGE_BALL);
+//
+//            if(retBall[0] >0 && retBall[1]>0 && retBall[2]>0)
+//            Imgproc.circle(mat,new org.opencv.core.Point((int)retBall[0],(int)retBall[1]),(int)retBall[2],new Scalar(0,255,0),2);
+//
+//            mat = mat.t();
+//            Core.flip(mat,mat,0);
+//            Bitmap bmp = null;
+//            bmp = Bitmap.createBitmap(mat.width(),mat.height(),Bitmap.Config.RGB_565);
+//            Utils.matToBitmap(mat,bmp);
+//            Log.e("Ryu","bitMap: "+ bmp.getWidth() + " "+bmp.getHeight());
+//            imgView.setImageBitmap(bmp);
+//
+//            bmp=null;
+//            mat=null;
+            if(lastTime==0)
+                lastTime = System.currentTimeMillis();
+            if(threadCount<10)
+            {
+                new ImageProcess().execute(textureView.getBitmap());
+                threadCount++;
+            }
 
-            if(retBall[0] >0 && retBall[1]>0 && retBall[2]>0)
-            Imgproc.circle(mat,new org.opencv.core.Point((int)retBall[0],(int)retBall[1]),(int)retBall[2],new Scalar(0,255,0),2);
-
-            mat = mat.t();
-            Core.flip(mat,mat,0);
-            Bitmap bmp = null;
-            bmp = Bitmap.createBitmap(mat.width(),mat.height(),Bitmap.Config.RGB_565);
-            Utils.matToBitmap(mat,bmp);
-            Log.e("Ryu","bitMap: "+ bmp.getWidth() + " "+bmp.getHeight());
-            imgView.setImageBitmap(bmp);
-
-            bmp=null;
-            mat=null;
         }
     };
 
@@ -424,27 +433,42 @@ public class MainActivity extends AppCompatActivity {
     class ImageProcess extends AsyncTask<Bitmap,Void,Void>
     {
         Mat mat = new Mat();
+        Bitmap bmp = null;
         @Override
         protected Void doInBackground(Bitmap... params) {
-
             Bitmap bmp32 = params[0].copy(Bitmap.Config.ARGB_8888, true);
             Utils.bitmapToMat(bmp32, mat);
+            Imgproc.resize(mat, mat,new org.opencv.core.Size(mat.height(),mat.width()));
             Imgproc.cvtColor(mat,mat, Imgproc.COLOR_RGB2BGR);
             Imgproc.resize(mat, mat,new org.opencv.core.Size(mat.width()/Config.scaleSize,mat.height()/Config.scaleSize));
+            //retBall[0]: point x
+            //retBall[1]: point y
+            //retBall[2]: point radius
             float[] retBall = UtilMatrix.DetectBall(mat,Config.OBJECT_COLOR.ORANGE_BALL);
-//            Imgproc.circle(mat,new org.opencv.core.Point((int)retBall[0],(int)retBall[1]),(int)retBall[2],new Scalar(0,255,0),2);
-//            Log.e("Shai","Count: "+count + " " +System.currentTimeMillis());
+
+            if(retBall[0] >0 && retBall[1]>0 && retBall[2]>0)
+                Imgproc.circle(mat,new org.opencv.core.Point((int)retBall[0],(int)retBall[1]),(int)retBall[2],new Scalar(0,255,0),2);
+
+            mat = mat.t();
+            Core.flip(mat,mat,0);
+
+            bmp = Bitmap.createBitmap(mat.width(),mat.height(),Bitmap.Config.RGB_565);
+            Utils.matToBitmap(mat,bmp);
+//            Log.e("Ryu","bitMap: "+ bmp.getWidth() + " "+bmp.getHeight());
+
             return null;
         }
 
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-            Bitmap bmp = null;
-            bmp = Bitmap.createBitmap(mat.width(),mat.height(),Bitmap.Config.RGB_565);
-            Utils.matToBitmap(mat,bmp);
             Log.e("Ryu", "den day la ok");
-
+            imgView.setImageBitmap(bmp);
+            threadCount--;
+            iFrameCount++;
+            Log.e("Ryu","current "+(iFrameCount*1000/(System.currentTimeMillis()-lastTime)));
+            bmp=null;
+            mat=null;
         }
     }
 

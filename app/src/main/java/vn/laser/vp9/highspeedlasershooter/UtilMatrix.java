@@ -66,9 +66,9 @@ public class UtilMatrix {
         // <<<<< Noise smoothing         // >>>>> HSV conversion
         List<Mat> hsvPlanes = new ArrayList<Mat>(3);
         Core.split(rgbInput, hsvPlanes);
-        Log.e("Ryu", "Split: "+hsvPlanes.size());
+//        Log.e("Ryu", "Split: "+hsvPlanes.size());
         Mat hue = hsvPlanes.get(0);
-        Log.e("Ryu", "hue: "+ hue.width()+ " "+ hue.height());
+//        Log.e("Ryu", "hue: "+ hue.width()+ " "+ hue.height());
 
         // Note: change parameters for different colors
         Mat rangeRes = Mat.zeros(rgbInput.size(), CvType.CV_8UC1);
@@ -89,7 +89,7 @@ public class UtilMatrix {
                 Imgproc.erode(rangeRes,rangeRes,Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE,new Size(5,5)));
 
                 Imgproc.findContours(rangeRes,contours,hirecy,Imgproc.RETR_EXTERNAL,Imgproc.CHAIN_APPROX_NONE);
-                Log.e("Ryu", "contour: "+contours.size());
+//                Log.e("Ryu", "contour: "+contours.size());
                 break;
             }
         }
@@ -101,21 +101,21 @@ public class UtilMatrix {
             Rect bBox = Imgproc.boundingRect(contours.get(i));
             float ratio = (float) bBox.width/bBox.height;
             if(ratio > 1.0f) ratio = 1.0f/ratio;
-            Log.e("Ryu", "ratio: "+ ratio + " "+bBox.area()) ;
+//            Log.e("Ryu", "ratio: "+ ratio + " "+bBox.area()) ;
             //searching for bBox almost square
-            if(ratio>0.4f && bBox.area()>=400)
+            if(ratio>0.5f && bBox.area()>=400)
             {
                 if(processMat.empty() || processMat == null){
-                    Log.e("Ryu", "hue is empty");
+//                    Log.e("Ryu", "hue is empty");
                     return new float[]{-1,-1,-1};
                 }
-                Log.e("Ryu","bOX: "+ bBox.x + " "+bBox.y + " " + bBox.width + " "+ bBox.height + " "+(bBox.x+bBox.width/2)  + " "+(bBox.y+ bBox.height/2));
-                Log.e("Ryu"," process: " + processMat.width() + " "+ processMat.height());
+//                Log.e("Ryu","bOX: "+ bBox.x + " "+bBox.y + " " + bBox.width + " "+ bBox.height + " "+(bBox.x+bBox.width/2)  + " "+(bBox.y+ bBox.height/2));
+//                Log.e("Ryu"," process: " + processMat.width() + " "+ processMat.height());
                 double[] pixelValue = processMat.get(bBox.y+bBox.height/2,bBox.x+bBox.width/2);
                 int hueAtPoint=190;
                 if(pixelValue!=null)
                 {
-                    Log.e("Ryu","hueAtPoint size: "+ pixelValue.length);
+//                    Log.e("Ryu","hueAtPoint size: "+ pixelValue.length);
                      hueAtPoint =(int) pixelValue[0];
                 }
                 else Log.e("Ryu"," is null fuck");
