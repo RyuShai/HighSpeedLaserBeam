@@ -158,4 +158,9 @@ public class UtilMatrix {
         }
     }
 
+    public static Mat multiply(Mat a, Mat b) {
+        Mat ret = new Mat();
+        Core.gemm(a, b, 1, new Mat(), 0, ret);
+        return ret;
+    }
 }

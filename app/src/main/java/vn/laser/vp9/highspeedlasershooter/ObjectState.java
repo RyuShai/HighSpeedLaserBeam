@@ -10,6 +10,7 @@ import org.opencv.core.Point3;
  * Created by ryu on 12/11/17.
  */
 
+
 public class ObjectState {
     public Point3 location;
     public Point3 speed;
@@ -56,7 +57,7 @@ public class ObjectState {
                 mPointInLaser.get(2,0)[0]);
     }
 
-    Mat multiply(Mat a, Mat b){
+    Mat multiply(Mat a, Mat b) {
         Mat ret = new Mat();
         Core.gemm(a, b, 1, new Mat(), 0, ret);
         return ret;

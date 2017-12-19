@@ -534,23 +534,4 @@ public class MainActivity extends AppCompatActivity {
         bindService(bindingIntent, serviceConnection, Context.BIND_AUTO_CREATE);
     }
 
-    void moveLaser(android.graphics.Point targetCoordinate)
-    {
-//        targetCoordinate.x = targetCoordinate.x+XmlParser.deltaXStep;
-//        targetCoordinate.y = targetCoordinate.y+XmlParser.deltaYStep;
-        if(targetCoordinate.x<0 || targetCoordinate.x>4000 ||targetCoordinate.y<0 || targetCoordinate.y>4000)
-        {
-        }
-        if(!curLaserCoordinate.equals(targetCoordinate))
-        {
-            if (targetCoordinate.x < 0) targetCoordinate.x = 0;
-            if (targetCoordinate.x > 4000) targetCoordinate.x= 4000;
-            if (targetCoordinate.y < 0) targetCoordinate.y = 0;
-            if (targetCoordinate.y > 4000) targetCoordinate.y = 4000;
-
-            final String data = "X" + String.valueOf(targetCoordinate.x) + " Y" + String.valueOf(targetCoordinate.y) + " ";
-            usbService.write(data.getBytes());
-            curLaserCoordinate = targetCoordinate;
-        }
-    }
 }
