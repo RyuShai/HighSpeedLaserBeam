@@ -1,6 +1,10 @@
 {
     "logs": [
         {
+            "outputFile": "/home/ha/Working/HighSpeedLaserBeam/openCVLibrary331/build/intermediates/incremental/mergeDebugAndroidTestResources/merged.dir/values/values.xml",
+            "map": []
+        },
+        {
             "outputFile": "/home/ryu/Documents/Project/AndroidProject/HighspeedLaserShooter/openCVLibrary331/build/intermediates/incremental/mergeDebugAndroidTestResources/merged.dir/values/values.xml",
             "map": []
         }
