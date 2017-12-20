@@ -18,7 +18,7 @@ public class ObjectBeamer{
     Mat state = new Mat(7,1, CvType.CV_64F);
     public double objectWidth ;//real object width in meter
     long lastMoment ;
-    long totalLatency = 150;
+    public long totalLatency = 170;
 
     android.graphics.Point curLaserCoordinate= new android.graphics.Point(0,0);
 
@@ -27,6 +27,7 @@ public class ObjectBeamer{
         objectWidth = 0.020;
         lastMoment = System.currentTimeMillis();
         XmlParser.readDataFromFile(Environment.getExternalStorageDirectory()+"/cam2laserMatrices.xml");
+        sendCoordinate = new android.graphics.Point(0,0);
     }
 
     /**
@@ -115,13 +116,11 @@ public class ObjectBeamer{
         return location;
     }
 
-    private int edge = 0;
-    android.graphics.Point sendCoordinate = new android.graphics.Point(0,0);
+    private int edge = 1;
+    android.graphics.Point sendCoordinate ;
     public void DrawRectangle(UsbService usbService)
     {
 
-        if(usbService == null)
-            return;
         if(edge == 1){
             if(sendCoordinate.x < Config.MAX){
                 sendCoordinate.x += Config.moveStep;
@@ -146,5 +145,6 @@ public class ObjectBeamer{
             }
             else  edge = 1;
         }
+        Log.e("Ryu","movelaser");
     }
 }

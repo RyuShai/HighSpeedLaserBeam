@@ -143,8 +143,6 @@ public class UtilMatrix {
     public static Mat multiply(Mat a, Mat b) {
 
         Mat ret = new Mat();
-        Log.e("Ryu","bb");
-        Log.e("Ryu","aaaa "+ a.width() +" "+ a.height());
         Core.gemm(a, b, 1, new Mat(), 0, ret);
 
         return ret;
