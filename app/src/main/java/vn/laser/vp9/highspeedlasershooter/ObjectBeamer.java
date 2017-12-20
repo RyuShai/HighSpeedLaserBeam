@@ -1,5 +1,6 @@
 package vn.laser.vp9.highspeedlasershooter;
 
+import android.os.Environment;
 import android.util.Log;
 
 import org.opencv.core.Core;
@@ -21,6 +22,7 @@ public class ObjectBeamer{
     public ObjectBeamer(){
         objectWidth = 0.013;
         lastMoment = System.currentTimeMillis();
+        XmlParser.readDataFromFile(Environment.getExternalStorageDirectory()+"/cam2laserMatrices.xml");
     }
 
     /**
@@ -60,6 +62,9 @@ public class ObjectBeamer{
         moveLaser(new android.graphics.Point(xStep, yStep), usbService);
     }
 
+    public void shoot(int u, int v, double objectSizeInPixels, UsbService usbService){
+
+    }
 
     public void moveLaser(android.graphics.Point targetCoordinate, UsbService usbService)
     {

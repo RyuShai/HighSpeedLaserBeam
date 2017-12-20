@@ -35,7 +35,7 @@ public class XmlParser {
 
     public static void readDataFromFile(String path)
     {
-        File initialFile = new File(Environment.getExternalStorageDirectory()+"/cam2laserMatrices.xml");
+        File initialFile = new File(path);//Environment.getExternalStorageDirectory()+"/cam2laserMatrices.xml");
         XmlPullParserFactory xmlFactoryObject = null;
         XmlPullParser myParser = null;
         Log.e(TAG,"Ryu haha");

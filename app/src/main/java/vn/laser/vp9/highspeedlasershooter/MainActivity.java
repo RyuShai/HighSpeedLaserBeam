@@ -145,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
         textureView.setSurfaceTextureListener(textureListener);
         beamer = new ObjectBeamer();
         //run over time in other thread every delayTimer
-//        new Timer().schedule(timerTask,500,Config.delayTimer);
+        new Timer().schedule(timerTask,500,Config.delayTimer);
     }
 
     @Override
@@ -172,7 +172,8 @@ public class MainActivity extends AppCompatActivity {
             if(usbService!=null && !usbService.isWriting)
             {
 //                UtilMatrix.DrawRectangle(usbService, sendCoordinate);
-                beamer.beam(usbService);
+//                beamer.beam(usbService);
+
             }
             }
 
@@ -208,7 +209,7 @@ public class MainActivity extends AppCompatActivity {
             //retBall[1]: point y
             //retBall[2]: point radius
             float[] retBall = UtilMatrix.DetectBall(mat,Config.OBJECT_COLOR.ORANGE_BALL);
-            beamer.update((int)retBall[0],(int)retBall[1],(double)retBall[2]);
+//            beamer.update((int)retBall[0],(int)retBall[1],(double)retBall[2]);
             if(retBall[0] >0 && retBall[1]>0 && retBall[2]>0)
             Imgproc.circle(mat,new org.opencv.core.Point((int)retBall[0],(int)retBall[1]),(int)retBall[2],new Scalar(0,255,0),2);
 
