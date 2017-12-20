@@ -9,6 +9,8 @@ import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Point3;
 
+import static vn.laser.vp9.highspeedlasershooter.Config.moveStep;
+
 
 public class ObjectBeamer{
 
@@ -16,11 +18,13 @@ public class ObjectBeamer{
     Mat state = new Mat(7,1, CvType.CV_64F);
     public double objectWidth ;//real object width in meter
     long lastMoment ;
+    long totalLatency = 150;
 
     android.graphics.Point curLaserCoordinate= new android.graphics.Point(0,0);
 
     public ObjectBeamer(){
-        objectWidth = 0.013;
+        totalLatency = 150;
+        objectWidth = 0.020;
         lastMoment = System.currentTimeMillis();
         XmlParser.readDataFromFile(Environment.getExternalStorageDirectory()+"/cam2laserMatrices.xml");
     }
@@ -33,7 +37,7 @@ public class ObjectBeamer{
      */
     public void update(int u, int v, int objectSizeInPixels){
         long now = System.currentTimeMillis();
-        double t = (now - lastMoment)/(double)1000;//the duration from last update
+        double t = (now - lastMoment )/(double)1000;//the duration from last update
         Point3 newPos = convertImage2Location(u,v, objectSizeInPixels);
         Point3 oldPost = new Point3(state.get(0,0)[0], state.get(1,0)[0], state.get(2,0)[0]);
         Point3 speed = new Point3( (newPos.x - oldPost.x)/t, (newPos.y - oldPost.y)/t,(newPos.z - oldPost.z)/t);
@@ -44,7 +48,7 @@ public class ObjectBeamer{
 
     public void beam(UsbService usbService){
         long now = System.currentTimeMillis();
-        double t = (now - lastMoment)/(double)1000;
+        double t = (now - lastMoment + totalLatency)/(double)1000;
         tranMat.put(0,0, new double[]{1,0,0,t,0,0,0,    0,1,0,0,t,0,0.5*t*t,  0,0,1,0,0,t,0,  0,0,0,1,0,0,0,  0,0,0,0,1,0,t,  0,0,0,0,0,1,0,  0,0,0,0,0,0,1});
         Mat predictedMat = UtilMatrix.multiply(tranMat, state);
         Point3 location= new Point3(predictedMat.get(0,0)[0], predictedMat.get(1,0)[0], predictedMat.get(2,0)[0]);
@@ -109,5 +113,38 @@ public class ObjectBeamer{
                 mPointInLaser.get(1,0)[0],
                 mPointInLaser.get(2,0)[0]);
         return location;
+    }
+
+    private int edge = 0;
+    android.graphics.Point sendCoordinate = new android.graphics.Point(0,0);
+    public void DrawRectangle(UsbService usbService)
+    {
+
+        if(usbService == null)
+            return;
+        if(edge == 1){
+            if(sendCoordinate.x < Config.MAX){
+                sendCoordinate.x += Config.moveStep;
+                moveLaser(sendCoordinate,usbService);
+            }
+            else if(sendCoordinate.y < Config.MAX){
+                sendCoordinate.x = Config.MAX;
+                sendCoordinate.y += Config.moveStep;
+                moveLaser(sendCoordinate,usbService);
+            }
+            else edge = 0;
+        }else{
+
+            if(sendCoordinate.y == Config.MAX && sendCoordinate.x > 0){
+                sendCoordinate.x -= Config.moveStep;
+                sendCoordinate.y = Config.MAX;
+                moveLaser(sendCoordinate,usbService);
+            }
+            else if(sendCoordinate.x == 0 && sendCoordinate.y > 0){
+                sendCoordinate.y -= moveStep;
+                moveLaser(sendCoordinate,usbService);
+            }
+            else  edge = 1;
+        }
     }
 }

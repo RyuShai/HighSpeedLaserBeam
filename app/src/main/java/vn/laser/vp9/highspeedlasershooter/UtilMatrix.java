@@ -94,6 +94,7 @@ public class UtilMatrix {
             }
         }
 
+
         int[] retCircle = new int[]{-1,-1,-1};
         int minColorDistance = 180;
         for(int i = 0; i<contours.size();i++)
@@ -129,35 +130,15 @@ public class UtilMatrix {
         return  retCircle;
     }
 
-    public static void DrawRectangle(UsbService usbService, Point sendCoordinate)
-    {
-        if(usbService == null)
-            return;
-        if(state == 1){
-            if(sendCoordinate.x < Config.MAX){
-                sendCoordinate.x += Config.moveStep;
-               MoveLaser(sendCoordinate,usbService);
-            }
-            else if(sendCoordinate.y < Config.MAX){
-                sendCoordinate.x = Config.MAX;
-                sendCoordinate.y += Config.moveStep;
-                MoveLaser(sendCoordinate,usbService);
-            }
-            else state = 0;
-        }else{
-
-            if(sendCoordinate.y == Config.MAX && sendCoordinate.x > 0){
-                sendCoordinate.x -= Config.moveStep;
-                sendCoordinate.y = Config.MAX;
-                MoveLaser(sendCoordinate,usbService);
-            }
-            else if(sendCoordinate.x == 0 && sendCoordinate.y > 0){
-                sendCoordinate.y -= moveStep;
-                MoveLaser(sendCoordinate,usbService);
-            }
-            else  state = 1;
-        }
+    static int[] DetectBall(Mat rgbInput , Config.OBJECT_COLOR objColor, int scale){
+        int retCircle[] = DetectBall(rgbInput, objColor);
+        retCircle[0] = retCircle[0]*scale;
+        retCircle[1] = retCircle[1]*scale;
+        retCircle[2] = retCircle[2]*scale;
+        return retCircle;
     }
+
+
 
     public static Mat multiply(Mat a, Mat b) {
 
