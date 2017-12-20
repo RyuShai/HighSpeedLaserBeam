@@ -208,8 +208,10 @@ public class MainActivity extends AppCompatActivity {
             //retBall[0]: point x
             //retBall[1]: point y
             //retBall[2]: point radius
-            float[] retBall = UtilMatrix.DetectBall(mat,Config.OBJECT_COLOR.ORANGE_BALL);
+            int[] retBall = UtilMatrix.DetectBall(mat,Config.OBJECT_COLOR.ORANGE_BALL);
 //            beamer.update((int)retBall[0],(int)retBall[1],(double)retBall[2]);
+            beamer.beamImmediately(retBall[0],retBall[1],retBall[2], usbService);
+
             if(retBall[0] >0 && retBall[1]>0 && retBall[2]>0)
             Imgproc.circle(mat,new org.opencv.core.Point((int)retBall[0],(int)retBall[1]),(int)retBall[2],new Scalar(0,255,0),2);
 
@@ -457,8 +459,8 @@ public class MainActivity extends AppCompatActivity {
             //retBall[0]: point x
             //retBall[1]: point y
             //retBall[2]: point radius
-            float[] retBall = UtilMatrix.DetectBall(mat,Config.OBJECT_COLOR.ORANGE_BALL);
-            beamer.update((int)retBall[0],(int)retBall[1],(double)retBall[2]);
+            int[] retBall = UtilMatrix.DetectBall(mat,Config.OBJECT_COLOR.ORANGE_BALL);
+            beamer.update(retBall[0],retBall[1],retBall[2]);
 
 //            Imgproc.cvtColor(mat,mat,Imgproc.COLOR_BGR2HSV);
 //            Scalar hsv_l = new Scalar(16, 80, 87);

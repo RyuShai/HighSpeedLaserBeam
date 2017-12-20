@@ -57,7 +57,7 @@ public class UtilMatrix {
      * @param rgbInput scaled - BGR format
      * @param objColor
      */
-    static float[]  DetectBall(Mat rgbInput , Config.OBJECT_COLOR objColor)
+    static int[] DetectBall(Mat rgbInput , Config.OBJECT_COLOR objColor)
     {
         Mat processMat = rgbInput.clone();
         Imgproc.GaussianBlur(processMat,processMat,new Size(5,5),3.0,3.0);
@@ -94,7 +94,7 @@ public class UtilMatrix {
             }
         }
 
-        float[] retCircle = new float[]{-1,-1,-1};
+        int[] retCircle = new int[]{-1,-1,-1};
         int minColorDistance = 180;
         for(int i = 0; i<contours.size();i++)
         {
@@ -107,7 +107,7 @@ public class UtilMatrix {
             {
                 if(processMat.empty() || processMat == null){
 //                    Log.e("Ryu", "hue is empty");
-                    return new float[]{-1,-1,-1};
+                    return new int[]{-1,-1,-1};
                 }
 //                Log.e("Ryu","bOX: "+ bBox.x + " "+bBox.y + " " + bBox.width + " "+ bBox.height + " "+(bBox.x+bBox.width/2)  + " "+(bBox.y+ bBox.height/2));
 //                Log.e("Ryu"," process: " + processMat.width() + " "+ processMat.height());
@@ -122,7 +122,7 @@ public class UtilMatrix {
 
                 int colorDistance = Math.abs(hueAtPoint-20);
                 if(colorDistance<minColorDistance)
-                    retCircle = new float[]{bBox.x+bBox.width/2, bBox.y+bBox.height/2, bBox.width/2};
+                    retCircle = new int[]{bBox.x+bBox.width/2, bBox.y+bBox.height/2, bBox.width/2};
             }
         }
 

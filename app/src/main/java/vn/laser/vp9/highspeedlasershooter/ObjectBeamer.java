@@ -31,7 +31,7 @@ public class ObjectBeamer{
      * @param v: vertical coordinate of detected object in image, a.k.a x
      * @param objectSizeInPixels
      */
-    public void update(int u, int v, double objectSizeInPixels){
+    public void update(int u, int v, int objectSizeInPixels){
         long now = System.currentTimeMillis();
         double t = (now - lastMoment)/(double)1000;//the duration from last update
         Point3 newPos = convertImage2Location(u,v, objectSizeInPixels);
@@ -61,7 +61,7 @@ public class ObjectBeamer{
      * This function allows to beam immediatly once the object is detected
      * (u,v) are detected image coordinate,
      */
-    public void beamImmediately(int u, int v, double objectSizeInPixels, UsbService usbService){
+    public void beamImmediately(int u, int v, int objectSizeInPixels, UsbService usbService){
         Point3 location = convertImage2Location(u,v, objectSizeInPixels);
         double alpha =  Math.atan2(location.x, location.z  );
         double beta = Math.atan2(location.y, Math.sqrt(location.x* location.x + location.z*location.z) );
@@ -88,7 +88,7 @@ public class ObjectBeamer{
         }
     }
 
-    private Point3 convertImage2Location(double u, double v, double pixelCount)
+    private Point3 convertImage2Location(int u, int v, int pixelCount)
     {
         //update location here
         Mat midleOfRightEdge = new Mat(3,1, CvType.CV_64F);
