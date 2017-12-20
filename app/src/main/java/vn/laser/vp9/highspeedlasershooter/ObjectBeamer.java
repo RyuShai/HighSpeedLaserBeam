@@ -34,16 +34,11 @@ public class ObjectBeamer{
     public void update(int u, int v, double objectSizeInPixels){
         long now = System.currentTimeMillis();
         double t = (now - lastMoment)/(double)1000;//the duration from last update
-        Log.e("Ryu","1");
         Point3 newPos = convertImage2Location(u,v, objectSizeInPixels);
-        Log.e("Ryu","2");
         Point3 oldPost = new Point3(state.get(0,0)[0], state.get(1,0)[0], state.get(2,0)[0]);
-        Log.e("Ryu","3");
         Point3 speed = new Point3( (newPos.x - oldPost.x)/t, (newPos.y - oldPost.y)/t,(newPos.z - oldPost.z)/t);
-        Log.e("Ryu","4");
 
         state.put(0,0, new double[]{newPos.x, newPos.y, newPos.z, speed.x, speed.y, speed. z, 9.8});
-        Log.e("Ryu","5");
         lastMoment = now;
     }
 
@@ -62,8 +57,18 @@ public class ObjectBeamer{
         moveLaser(new android.graphics.Point(xStep, yStep), usbService);
     }
 
-    public void shoot(int u, int v, double objectSizeInPixels, UsbService usbService){
+    /**
+     * This function allows to beam immediatly once the object is detected
+     * (u,v) are detected image coordinate,
+     */
+    public void beamImmediately(int u, int v, double objectSizeInPixels, UsbService usbService){
+        Point3 location = convertImage2Location(u,v, objectSizeInPixels);
+        double alpha =  Math.atan2(location.x, location.z  );
+        double beta = Math.atan2(location.y, Math.sqrt(location.x* location.x + location.z*location.z) );
 
+        int xStep = (int)( alpha / XmlParser.alphaStep);
+        int yStep = (int)( beta / XmlParser.betaStep);
+        moveLaser(new android.graphics.Point(xStep, yStep), usbService);
     }
 
     public void moveLaser(android.graphics.Point targetCoordinate, UsbService usbService)
@@ -83,37 +88,26 @@ public class ObjectBeamer{
         }
     }
 
-
     private Point3 convertImage2Location(double u, double v, double pixelCount)
     {
         //update location here
-        Log.e("Ryu","a");
         Mat midleOfRightEdge = new Mat(3,1, CvType.CV_64F);
-        Log.e("Ryu","b");
         midleOfRightEdge.put(0,0, new double[]{objectWidth, 0, 0});//P_midleEdge - P_center
-        Log.e("Ryu","c");
 
         Mat pMultipledByLambda = UtilMatrix.multiply(XmlParser.camera_intrinsics, midleOfRightEdge);//pMultipledByLambda = K(P_midleEdge - P_center)
-        Log.e("Ryu","d");
         double lambda = pMultipledByLambda.get(0,0)[0] / pixelCount;
 
         Mat point2d_vec = new Mat(3, 1, CvType.CV_64F);
-        Log.e("Ryu","e");
         point2d_vec.put(0, 0, new double[]{u * lambda, v * lambda, lambda});
 
         // Center face in camera coordinates
         Mat X_c = UtilMatrix.multiply(XmlParser.camera_intrinsics.inv(), point2d_vec);
-        Log.e("Ryu","e");
         Mat rMulXC = UtilMatrix.multiply(XmlParser.rRodC2L, X_c);
-        Log.e("Ryu","f");
         Mat mPointInLaser = new Mat();
-        Log.e("Ryu","g");
         Core.add(rMulXC, XmlParser.tC2L, mPointInLaser);
-        Log.e("Ryu","v");
         Point3 location= new Point3(mPointInLaser.get(0,0)[0],
                 mPointInLaser.get(1,0)[0],
                 mPointInLaser.get(2,0)[0]);
-        Log.e("Ryu","m");
         return location;
     }
 }

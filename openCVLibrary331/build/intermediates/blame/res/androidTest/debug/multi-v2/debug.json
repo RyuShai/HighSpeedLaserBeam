@@ -3,6 +3,10 @@
         {
             "outputFile": "/home/ryu/Documents/Project/AndroidProject/HighspeedLaserShooter/openCVLibrary331/build/intermediates/res/merged/androidTest/debug/values_values.arsc.flat",
             "map": []
+        },
+        {
+            "outputFile": "/home/ha/Working/HighSpeedLaserBeam-MultiThread/HighSpeedLaserBeam/openCVLibrary331/build/intermediates/res/merged/androidTest/debug/values_values.arsc.flat",
+            "map": []
         }
     ]
 }
