@@ -146,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
         textureView.setSurfaceTextureListener(textureListener);
         beamer = new ObjectBeamer();
         //run over time in other thread every delayTimer
-        new Timer().schedule(timerTask,500,Config.delayTimer);
+//        new Timer().schedule(timerTask,500,Config.delayTimer);
     }
 
     @Override
@@ -176,6 +176,31 @@ public class MainActivity extends AppCompatActivity {
 
     };
 
+    public void processFrame(Bitmap[] params ){
+        Bitmap bmp32 = params[0].copy(Bitmap.Config.ARGB_8888, true);
+        Mat mat = new Mat();
+        Utils.bitmapToMat(bmp32, mat);
+
+        mat = mat.t();
+        Core.flip(mat,mat,0);
+        Imgproc.resize(mat, mat,new org.opencv.core.Size(mat.height(),mat.width()));
+
+        Imgproc.cvtColor(mat,mat, Imgproc.COLOR_RGB2BGR);
+        Mat drawMat = mat.clone();
+        Imgproc.resize(mat, mat,new org.opencv.core.Size(mat.width()/Config.scaleSize,mat.height()/Config.scaleSize));
+        int[] retBall = UtilMatrix.DetectBall(mat,Config.OBJECT_COLOR.ORANGE_BALL, Config.scaleSize);//retBall[0->2]: x,y, and radius respectively
+        beamer.update(retBall[0]*3/2,retBall[1]*3/2,retBall[2]*3/2);
+        //beamer.beamImmediately(retBall[0]*3/2,retBall[1]*3/2,retBall[2]*3/2, usbService);
+
+        if(retBall[0] >0 && retBall[1]>0 && retBall[2]>0)
+            Imgproc.circle(drawMat,new org.opencv.core.Point((int)retBall[0],(int)retBall[1]),(int)retBall[2],new Scalar(0,255,0),2);
+
+        Bitmap bmp = null;
+        bmp = Bitmap.createBitmap(drawMat.width(),drawMat.height(),Bitmap.Config.RGB_565);
+        Utils.matToBitmap(drawMat,bmp);
+        imgView.setImageBitmap(bmp);
+    }
+
     TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
@@ -193,30 +218,7 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
 
-        public void processFrame(Bitmap[] params ){
-            Bitmap bmp32 = params[0].copy(Bitmap.Config.ARGB_8888, true);
-            Mat mat = new Mat();
-            Utils.bitmapToMat(bmp32, mat);
 
-            mat = mat.t();
-            Core.flip(mat,mat,0);
-            Imgproc.resize(mat, mat,new org.opencv.core.Size(mat.height(),mat.width()));
-
-            Imgproc.cvtColor(mat,mat, Imgproc.COLOR_RGB2BGR);
-            Mat drawMat = mat.clone();
-            Imgproc.resize(mat, mat,new org.opencv.core.Size(mat.width()/Config.scaleSize,mat.height()/Config.scaleSize));
-            int[] retBall = UtilMatrix.DetectBall(mat,Config.OBJECT_COLOR.ORANGE_BALL, Config.scaleSize);//retBall[0->2]: x,y, and radius respectively
-            beamer.update(retBall[0]*3/2,retBall[1]*3/2,retBall[2]*3/2);
-            //beamer.beamImmediately(retBall[0]*3/2,retBall[1]*3/2,retBall[2]*3/2, usbService);
-
-            if(retBall[0] >0 && retBall[1]>0 && retBall[2]>0)
-            Imgproc.circle(drawMat,new org.opencv.core.Point((int)retBall[0],(int)retBall[1]),(int)retBall[2],new Scalar(0,255,0),2);
-
-            Bitmap bmp = null;
-            bmp = Bitmap.createBitmap(drawMat.width(),drawMat.height(),Bitmap.Config.RGB_565);
-            Utils.matToBitmap(drawMat,bmp);
-            imgView.setImageBitmap(bmp);
-        }
 
         @Override
         public void onSurfaceTextureUpdated(SurfaceTexture surface) {
@@ -235,13 +237,13 @@ public class MainActivity extends AppCompatActivity {
 //            int[] retBall = UtilMatrix.DetectBall(mat,Config.OBJECT_COLOR.ORANGE_BALL, Config.scaleSize);//retBall[0->2]: x,y, and radius respectively
 //            //int[] retBall = UtilMatrix.DetectBall(mat,Config.OBJECT_COLOR.ORANGE_BALL);//retBall[0->2]: x,y, and radius respectively
 ////            Log.e("Ryu", "X: " + retBall[0] + " Y:" + retBall[1] + " Rad" + retBall[2] );
-//            beamer.update(retBall[0],retBall[1],retBall[2]);
-//            //beamer.beamImmediately(retBall[0]*3/2,retBall[1]*3/2,retBall[2]*3/2, usbService);
-//            if(startMove)
-//            {
-//                beamer.DrawRectangle(usbService);
-//                startMove=false;
-//            }
+////            beamer.update(retBall[0],retBall[1],retBall[2]);
+//            beamer.beamImmediately(retBall[0]*3/2,retBall[1]*3/2,retBall[2]*3/2, usbService);
+////            if(startMove)
+////            {
+////                beamer.DrawRectangle(usbService);
+////                startMove=false;
+////            }
 //
 //
 //            if(retBall[0] >0 && retBall[1]>0 && retBall[2]>0)
@@ -441,12 +443,12 @@ public class MainActivity extends AppCompatActivity {
                     //float fps = (toc-tic)/result.getFrameNumber();
 //                    Log.i("Completed", "fps:" + result.getFrameNumber());
                     //120shutter/s
-                    if(!startMove)
-                    {
-                        Log.e("Ryu","capturecomplete");
-                        beamer.DrawRectangle(usbService);
-                        startMove=true;
-                    }
+//                    if(!startMove)
+//                    {
+//                        Log.e("Ryu","capturecomplete");
+//                        beamer.DrawRectangle(usbService);
+//                        startMove=true;
+//                    }
 
                 }
             }, null);
@@ -485,14 +487,20 @@ public class MainActivity extends AppCompatActivity {
         protected Void doInBackground(Bitmap... params) {
             Bitmap bmp32 = params[0].copy(Bitmap.Config.ARGB_8888, true);
             Utils.bitmapToMat(bmp32, mat);
+
             mat = mat.t();
             Core.flip(mat,mat,0);
             Imgproc.resize(mat, mat,new org.opencv.core.Size(mat.height(),mat.width()));
 
             Imgproc.cvtColor(mat,mat, Imgproc.COLOR_RGB2BGR);
+            Mat drawMat = mat.clone();
             Imgproc.resize(mat, mat,new org.opencv.core.Size(mat.width()/Config.scaleSize,mat.height()/Config.scaleSize));
-            int[] retBall = UtilMatrix.DetectBall(mat,Config.OBJECT_COLOR.ORANGE_BALL);
-            beamer.update(retBall[0]*3/2,retBall[1]*3/2,retBall[2]*3/2);
+            int[] retBall = UtilMatrix.DetectBall(mat,Config.OBJECT_COLOR.ORANGE_BALL, Config.scaleSize);//retBall[0->2]: x,y, and radius respectively
+            //int[] retBall = UtilMatrix.DetectBall(mat,Config.OBJECT_COLOR.ORANGE_BALL);//retBall[0->2]: x,y, and radius respectively
+//            Log.e("Ryu", "X: " + retBall[0] + " Y:" + retBall[1] + " Rad" + retBall[2] );
+//            beamer.update(retBall[0],retBall[1],retBall[2]);
+            beamer.beamImmediately(retBall[0]*3/2,retBall[1]*3/2,retBall[2]*3/2, usbService);
+
 //            if(startMove)
 //            {
 //                beamer.DrawRectangle(usbService);
@@ -501,11 +509,12 @@ public class MainActivity extends AppCompatActivity {
 
 
             if(retBall[0] >0 && retBall[1]>0 && retBall[2]>0)
-                Imgproc.circle(mat,new org.opencv.core.Point((int)retBall[0],(int)retBall[1]),(int)retBall[2],new Scalar(0,255,0),2);
+                Imgproc.circle(drawMat,new org.opencv.core.Point((int)retBall[0],(int)retBall[1]),(int)retBall[2],new Scalar(0,255,0),2);
 
-            bmp = Bitmap.createBitmap(mat.width(),mat.height(),Bitmap.Config.RGB_565);
-            Utils.matToBitmap(mat,bmp);
-//            Log.e("Ryu","bitMap: "+ bmp.getWidth() + " "+bmp.getHeight());
+//            Bitmap bmp = null;
+            bmp = Bitmap.createBitmap(drawMat.width(),drawMat.height(),Bitmap.Config.RGB_565);
+            Utils.matToBitmap(drawMat,bmp);
+//            imgView.setImageBitmap(bmp);
             return null;
         }
 
@@ -513,10 +522,11 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
 //            Log.e("Ryu", "den day la ok");
+//            beamer.beam(usbService);
             imgView.setImageBitmap(bmp);
             threadCount--;
             iFrameCount++;
-            Log.e("Ryu","current "+(iFrameCount*1000/(System.currentTimeMillis()-lastTime)));
+//            Log.e("Ryu","current "+(iFrameCount*1000/(System.currentTimeMillis()-lastTime)));
             bmp=null;
             mat=null;
         }

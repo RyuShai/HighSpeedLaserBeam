@@ -88,6 +88,7 @@ public class ObjectBeamer{
             if (targetCoordinate.y > 4000) targetCoordinate.y = 4000;
 
             final String data = "X" + String.valueOf(targetCoordinate.x) + " Y" + String.valueOf(targetCoordinate.y) + " ";
+            Log.e(Config.tag,data);
             usbService.write(data.getBytes());
             curLaserCoordinate = targetCoordinate;
         }
