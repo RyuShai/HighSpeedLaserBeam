@@ -9,6 +9,8 @@ import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Point3;
 
+import java.util.Random;
+
 import static vn.laser.vp9.highspeedlasershooter.Config.moveStep;
 
 
@@ -18,12 +20,11 @@ public class ObjectBeamer{
     Mat state = new Mat(7,1, CvType.CV_64F);
     public double objectWidth ;//real object width in meter
     long lastMoment ;
-    public long totalLatency = 170;
+    public long totalLatency = 250;
 
     android.graphics.Point curLaserCoordinate= new android.graphics.Point(0,0);
 
     public ObjectBeamer(){
-        totalLatency = 150;
         objectWidth = 0.020;
         lastMoment = System.currentTimeMillis();
         XmlParser.readDataFromFile(Environment.getExternalStorageDirectory()+"/cam2laserMatrices.xml");
@@ -45,14 +46,27 @@ public class ObjectBeamer{
 
         state.put(0,0, new double[]{newPos.x, newPos.y, newPos.z, speed.x, speed.y, speed. z, 9.8});
         lastMoment = now;
+
+        Log.e("beamer","updated coordinate" + newPos.x + " " + newPos.y + " " + newPos.z + " Spped " + speed.x + " " + speed.y + " " + speed.z );
     }
 
     public void beam(UsbService usbService){
         long now = System.currentTimeMillis();
         double t = (now - lastMoment + totalLatency)/(double)1000;
-        tranMat.put(0,0, new double[]{1,0,0,t,0,0,0,    0,1,0,0,t,0,0.5*t*t,  0,0,1,0,0,t,0,  0,0,0,1,0,0,0,  0,0,0,0,1,0,t,  0,0,0,0,0,1,0,  0,0,0,0,0,0,1});
+        Log.e("beamer", "Time:" + now + " - " + lastMoment + " + " + totalLatency);
+        double lastSpeedY = state.get(4,0)[0];
+        double gtt = 0.5*t*t;
+        if(lastSpeedY<0.01) gtt = 0;
+        tranMat.put(0,0, new double[]{1,0,0,t,0,0,0,
+                                                0,1,0,0,t,0,gtt,
+                                                0,0,1,0,0,t,0,
+                                                0,0,0,1,0,0,0,
+                                                0,0,0,0,1,0,t,
+                                                0,0,0,0,0,1,0,
+                                                0,0,0,0,0,0,1});
         Mat predictedMat = UtilMatrix.multiply(tranMat, state);
         Point3 location= new Point3(predictedMat.get(0,0)[0], predictedMat.get(1,0)[0], predictedMat.get(2,0)[0]);
+        Point3 speed= new Point3(predictedMat.get(3,0)[0], predictedMat.get(4,0)[0], predictedMat.get(5,0)[0]);
 
         double alpha =  Math.atan2(location.x, location.z  );
         double beta = Math.atan2(location.y, Math.sqrt(location.x* location.x + location.z*location.z) );
@@ -60,6 +74,10 @@ public class ObjectBeamer{
         int xStep = (int)( alpha / XmlParser.alphaStep);
         int yStep = (int)( beta / XmlParser.betaStep);
         moveLaser(new android.graphics.Point(xStep, yStep), usbService);
+
+        Log.e("beamer",  "beaming coordinate" + location.x + " " + location.y + " " + location.z+ " Spped " + speed.x + " " + speed.y + " " + speed.z );
+        Log.e("beamer",  "Laser steps: " + xStep + " " + xStep + " t:" + t);
+        Log.e("beamer",  "____________________________________________");
     }
 
     /**
@@ -78,19 +96,21 @@ public class ObjectBeamer{
 
     public void moveLaser(android.graphics.Point targetCoordinate, UsbService usbService)
     {
-        targetCoordinate.x = targetCoordinate.x+XmlParser.deltaXStep;
-        targetCoordinate.y = targetCoordinate.y+XmlParser.deltaYStep;
-        if(!curLaserCoordinate.equals(targetCoordinate))
-        {
-            if (targetCoordinate.x < 0) targetCoordinate.x = 0;
-            if (targetCoordinate.x > 4000) targetCoordinate.x= 4000;
-            if (targetCoordinate.y < 0) targetCoordinate.y = 0;
-            if (targetCoordinate.y > 4000) targetCoordinate.y = 4000;
+        android.graphics.Point tunnedPoint = targetCoordinate;
 
-            final String data = "X" + String.valueOf(targetCoordinate.x) + " Y" + String.valueOf(targetCoordinate.y) + " ";
+        tunnedPoint.x = tunnedPoint.x+XmlParser.deltaXStep;
+        tunnedPoint.y = tunnedPoint.y+XmlParser.deltaYStep;
+        if(!curLaserCoordinate.equals(tunnedPoint))
+        {
+            if (tunnedPoint.x < 0) tunnedPoint.x = 0;
+            if (tunnedPoint.x > 4000) tunnedPoint.x= 4000;
+            if (tunnedPoint.y < 0) tunnedPoint.y = 0;
+            if (tunnedPoint.y > 4000) tunnedPoint.y = 4000;
+
+            final String data = "X" + String.valueOf(tunnedPoint.x) + " Y" + String.valueOf(tunnedPoint.y) + " ";
             Log.e(Config.tag,data);
             usbService.write(data.getBytes());
-            curLaserCoordinate = targetCoordinate;
+            curLaserCoordinate = tunnedPoint;
         }
     }
 
@@ -121,31 +141,42 @@ public class ObjectBeamer{
     android.graphics.Point sendCoordinate ;
     public void DrawRectangle(UsbService usbService)
     {
-
+        Log.e("Ryu","movelaser");
         if(edge == 1){
+            sendCoordinate.y = 0;
             if(sendCoordinate.x < Config.MAX){
                 sendCoordinate.x += Config.moveStep;
-                moveLaser(sendCoordinate,usbService);
             }
-            else if(sendCoordinate.y < Config.MAX){
-                sendCoordinate.x = Config.MAX;
-                sendCoordinate.y += Config.moveStep;
-                moveLaser(sendCoordinate,usbService);
-            }
-            else edge = 0;
-        }else{
-
-            if(sendCoordinate.y == Config.MAX && sendCoordinate.x > 0){
-                sendCoordinate.x -= Config.moveStep;
-                sendCoordinate.y = Config.MAX;
-                moveLaser(sendCoordinate,usbService);
-            }
-            else if(sendCoordinate.x == 0 && sendCoordinate.y > 0){
-                sendCoordinate.y -= moveStep;
-                moveLaser(sendCoordinate,usbService);
-            }
-            else  edge = 1;
+            else
+                edge = 2;
         }
-        Log.e("Ryu","movelaser");
+        else if(edge == 2){
+            sendCoordinate.x = Config.MAX;
+            if(sendCoordinate.y < Config.MAX){
+                sendCoordinate.y += Config.moveStep;
+            }
+            else edge = 3;
+        }else if(edge ==3) {
+            sendCoordinate.y = Config.MAX;
+            if(sendCoordinate.x > 0){
+                sendCoordinate.x -= Config.moveStep;
+            }else
+                edge = 4;
+        }else{
+            sendCoordinate.x = 0;
+            if(sendCoordinate.y > 0){
+                sendCoordinate.y -= Config.moveStep;
+            }else
+                edge = 1;
+        }
+
+        Log.e("Ha","movelaser to" + sendCoordinate.x + " " + sendCoordinate.y);
+        moveLaser(sendCoordinate,usbService);
+    }
+
+    public void DrawDiagonalLine(UsbService usbService){
+        Random r = new Random();
+        int i1 = r.nextInt(Config.MAX + 1);
+        moveLaser(new android.graphics.Point(i1, i1), usbService);
     }
 }

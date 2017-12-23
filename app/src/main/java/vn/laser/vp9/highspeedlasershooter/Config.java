@@ -10,8 +10,8 @@ public class Config {
         public static String tag = "Ryu";
         public static final int PERMISSION_EXTERNAL_STORAGE =0;
         public static final int PERMISSION_CAMERA = 1;
-        public static int MAX=4000,moveStep=1000;
-        public static long delayTimer = 10;
+        public static int MAX=4000,moveStep=10;
+        public static long delayTimer = 20;
         public static int scaleSize = 4;
 
         public enum OBJECT_COLOR{

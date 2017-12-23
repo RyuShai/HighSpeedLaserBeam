@@ -55,6 +55,7 @@ import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 import org.w3c.dom.Text;
@@ -62,8 +63,10 @@ import org.w3c.dom.Text;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.security.Policy;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -85,25 +88,17 @@ public class MainActivity extends AppCompatActivity {
     UsbService usbService =null;
     MyHandler mHandler=null;
 
-    Point sendCoordinate;
-
     int w=1280;
-    int h=720;
+    int h=720;//size of display framed
     int threadCount=0;
-    android.graphics.Point curLaserCoordinate= new android.graphics.Point(0,0);
     ObjectBeamer beamer;
-    boolean startMove=false;
-    //Test vairable
-
 
     int iFrameCount=0;
-    int count = 0;
     int orientation;
     long lastTime=0;
     long currentTime=0;
     TextView txtView;
 
-    //==============
     //============================================================================//
     static{
         if(OpenCVLoader.initDebug())
@@ -111,7 +106,6 @@ public class MainActivity extends AppCompatActivity {
             Log.d(tag,"opencv loadded");
         }else{
             Log.d(tag,"opencv load failed");
-
         }
     }
     private final ServiceConnection usbConnection = new ServiceConnection() {
@@ -134,19 +128,16 @@ public class MainActivity extends AppCompatActivity {
 
         CheckPermission();//first check permission
 
-        sendCoordinate = new Point(0,0);
-
         txtView = (TextView) findViewById(R.id.textView);
         imgView = (ImageView) findViewById(R.id.imageView);
+//        imgView.setAl
 
         textureView = (AutoFitTextureView) findViewById(R.id.textureView);
-//        textureView.setRotation(270.0f);
-//        textureView = new AutoFitTextureView(this);
 
         textureView.setSurfaceTextureListener(textureListener);
         beamer = new ObjectBeamer();
         //run over time in other thread every delayTimer
-//        new Timer().schedule(timerTask,500,Config.delayTimer);
+        new Timer().schedule(timerTask,500,Config.delayTimer);
     }
 
     @Override
@@ -164,103 +155,6 @@ public class MainActivity extends AppCompatActivity {
         unregisterReceiver(mUsbReceiver);
         unbindService(usbConnection);
     }
-
-    TimerTask timerTask = new TimerTask() {
-        @Override
-        public void run() {
-        if(usbService!=null && !usbService.isWriting)
-        {
-            beamer.beam(usbService);
-        }
-            }
-
-    };
-
-    public void processFrame(Bitmap[] params ){
-        Bitmap bmp32 = params[0].copy(Bitmap.Config.ARGB_8888, true);
-        Mat mat = new Mat();
-        Utils.bitmapToMat(bmp32, mat);
-
-        mat = mat.t();
-        Core.flip(mat,mat,0);
-        Imgproc.resize(mat, mat,new org.opencv.core.Size(mat.height(),mat.width()));
-
-        Imgproc.cvtColor(mat,mat, Imgproc.COLOR_RGB2BGR);
-        Mat drawMat = mat.clone();
-        Imgproc.resize(mat, mat,new org.opencv.core.Size(mat.width()/Config.scaleSize,mat.height()/Config.scaleSize));
-        int[] retBall = UtilMatrix.DetectBall(mat,Config.OBJECT_COLOR.ORANGE_BALL, Config.scaleSize);//retBall[0->2]: x,y, and radius respectively
-        beamer.update(retBall[0]*3/2,retBall[1]*3/2,retBall[2]*3/2);
-        //beamer.beamImmediately(retBall[0]*3/2,retBall[1]*3/2,retBall[2]*3/2, usbService);
-
-        if(retBall[0] >0 && retBall[1]>0 && retBall[2]>0)
-            Imgproc.circle(drawMat,new org.opencv.core.Point((int)retBall[0],(int)retBall[1]),(int)retBall[2],new Scalar(0,255,0),2);
-
-        Bitmap bmp = null;
-        bmp = Bitmap.createBitmap(drawMat.width(),drawMat.height(),Bitmap.Config.RGB_565);
-        Utils.matToBitmap(drawMat,bmp);
-        imgView.setImageBitmap(bmp);
-    }
-
-    TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
-        @Override
-        public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-            Log.e("Ryu","width: "+ width + " height "+ height);
-            openCamera();
-        }
-
-        @Override
-        public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-
-        }
-
-        @Override
-        public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-            return false;
-        }
-
-
-
-        @Override
-        public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-//            Mat mat = new Mat();
-//            Bitmap[] params = {textureView.getBitmap()};
-//            Bitmap bmp32 = params[0].copy(Bitmap.Config.ARGB_8888, true);
-//            Utils.bitmapToMat(bmp32, mat);
-//
-//            mat = mat.t();
-//            Core.flip(mat,mat,0);
-//            Imgproc.resize(mat, mat,new org.opencv.core.Size(mat.height(),mat.width()));
-//
-//            Imgproc.cvtColor(mat,mat, Imgproc.COLOR_RGB2BGR);
-//            Mat drawMat = mat.clone();
-//            Imgproc.resize(mat, mat,new org.opencv.core.Size(mat.width()/Config.scaleSize,mat.height()/Config.scaleSize));
-//            int[] retBall = UtilMatrix.DetectBall(mat,Config.OBJECT_COLOR.ORANGE_BALL, Config.scaleSize);//retBall[0->2]: x,y, and radius respectively
-//            //int[] retBall = UtilMatrix.DetectBall(mat,Config.OBJECT_COLOR.ORANGE_BALL);//retBall[0->2]: x,y, and radius respectively
-////            Log.e("Ryu", "X: " + retBall[0] + " Y:" + retBall[1] + " Rad" + retBall[2] );
-////            beamer.update(retBall[0],retBall[1],retBall[2]);
-//            beamer.beamImmediately(retBall[0]*3/2,retBall[1]*3/2,retBall[2]*3/2, usbService);
-////            if(startMove)
-////            {
-////                beamer.DrawRectangle(usbService);
-////                startMove=false;
-////            }
-//
-//
-//            if(retBall[0] >0 && retBall[1]>0 && retBall[2]>0)
-//            Imgproc.circle(drawMat,new org.opencv.core.Point((int)retBall[0],(int)retBall[1]),(int)retBall[2],new Scalar(0,255,0),2);
-//
-//            Bitmap bmp = null;
-//            bmp = Bitmap.createBitmap(drawMat.width(),drawMat.height(),Bitmap.Config.RGB_565);
-//            Utils.matToBitmap(drawMat,bmp);
-//            imgView.setImageBitmap(bmp);
-
-            if(threadCount<10)
-            {
-                threadCount++;
-                new ImageProcess().execute(textureView.getBitmap());
-            }
-        }
-    };
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -339,7 +233,6 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-
     void openCamera()
     {
         Log.e("Ryu", "opencamera");
@@ -354,11 +247,6 @@ public class MainActivity extends AppCompatActivity {
                     CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             orientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
             Log.e("Ryu","oriend: "+ orientation);
-//            Size[] sizes =configs.getOutputSizes(SurfaceTexture.class);
-//            for (Size size :
-//                    sizes) {
-//                Log.e("Ryu","Size: "+ size.toString());
-//            }
             
             // Add permission for camera and let user grant the permission
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
@@ -443,12 +331,6 @@ public class MainActivity extends AppCompatActivity {
                     //float fps = (toc-tic)/result.getFrameNumber();
 //                    Log.i("Completed", "fps:" + result.getFrameNumber());
                     //120shutter/s
-//                    if(!startMove)
-//                    {
-//                        Log.e("Ryu","capturecomplete");
-//                        beamer.DrawRectangle(usbService);
-//                        startMove=true;
-//                    }
 
                 }
             }, null);
@@ -475,62 +357,8 @@ public class MainActivity extends AppCompatActivity {
 //        currentTime = System.currentTimeMillis();
 //        Log.e(tag,"Count: "+count + " " +(currentTime-lastTime));
 //        lastTime = currentTime;
-//        count++;
     }
 
-
-    class ImageProcess extends AsyncTask<Bitmap,Void,Void>
-    {
-        Mat mat = new Mat();
-        Bitmap bmp = null;
-        @Override
-        protected Void doInBackground(Bitmap... params) {
-            Bitmap bmp32 = params[0].copy(Bitmap.Config.ARGB_8888, true);
-            Utils.bitmapToMat(bmp32, mat);
-
-            mat = mat.t();
-            Core.flip(mat,mat,0);
-            Imgproc.resize(mat, mat,new org.opencv.core.Size(mat.height(),mat.width()));
-
-            Imgproc.cvtColor(mat,mat, Imgproc.COLOR_RGB2BGR);
-            Mat drawMat = mat.clone();
-            Imgproc.resize(mat, mat,new org.opencv.core.Size(mat.width()/Config.scaleSize,mat.height()/Config.scaleSize));
-            int[] retBall = UtilMatrix.DetectBall(mat,Config.OBJECT_COLOR.ORANGE_BALL, Config.scaleSize);//retBall[0->2]: x,y, and radius respectively
-            //int[] retBall = UtilMatrix.DetectBall(mat,Config.OBJECT_COLOR.ORANGE_BALL);//retBall[0->2]: x,y, and radius respectively
-//            Log.e("Ryu", "X: " + retBall[0] + " Y:" + retBall[1] + " Rad" + retBall[2] );
-//            beamer.update(retBall[0],retBall[1],retBall[2]);
-            beamer.beamImmediately(retBall[0]*3/2,retBall[1]*3/2,retBall[2]*3/2, usbService);
-
-//            if(startMove)
-//            {
-//                beamer.DrawRectangle(usbService);
-//                startMove=false;
-//            }
-
-
-            if(retBall[0] >0 && retBall[1]>0 && retBall[2]>0)
-                Imgproc.circle(drawMat,new org.opencv.core.Point((int)retBall[0],(int)retBall[1]),(int)retBall[2],new Scalar(0,255,0),2);
-
-//            Bitmap bmp = null;
-            bmp = Bitmap.createBitmap(drawMat.width(),drawMat.height(),Bitmap.Config.RGB_565);
-            Utils.matToBitmap(drawMat,bmp);
-//            imgView.setImageBitmap(bmp);
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-//            Log.e("Ryu", "den day la ok");
-//            beamer.beam(usbService);
-            imgView.setImageBitmap(bmp);
-            threadCount--;
-            iFrameCount++;
-//            Log.e("Ryu","current "+(iFrameCount*1000/(System.currentTimeMillis()-lastTime)));
-            bmp=null;
-            mat=null;
-        }
-    }
 
     /**
      * Configures the necessary {@link android.graphics.Matrix} transformation to `mTextureView`.
@@ -618,23 +446,133 @@ public class MainActivity extends AppCompatActivity {
         bindService(bindingIntent, serviceConnection, Context.BIND_AUTO_CREATE);
     }
 
-    void moveLaser(android.graphics.Point targetCoordinate)
-    {
-//        targetCoordinate.x = targetCoordinate.x+XmlParser.deltaXStep;
-//        targetCoordinate.y = targetCoordinate.y+XmlParser.deltaYStep;
-        if(targetCoordinate.x<0 || targetCoordinate.x>4000 ||targetCoordinate.y<0 || targetCoordinate.y>4000)
-        {
+    TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
+        @Override
+        public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+            Log.e("Ryu","width: "+ width + " height "+ height);
+            openCamera();
         }
-        if(!curLaserCoordinate.equals(targetCoordinate))
-        {
-            if (targetCoordinate.x < 0) targetCoordinate.x = 0;
-            if (targetCoordinate.x > 4000) targetCoordinate.x= 4000;
-            if (targetCoordinate.y < 0) targetCoordinate.y = 0;
-            if (targetCoordinate.y > 4000) targetCoordinate.y = 4000;
 
-            final String data = "X" + String.valueOf(targetCoordinate.x) + " Y" + String.valueOf(targetCoordinate.y) + " ";
-            usbService.write(data.getBytes());
-            curLaserCoordinate = targetCoordinate;
+        @Override
+        public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+
+        }
+
+        @Override
+        public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+            return false;
+        }
+
+        @Override
+        public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+//            Mat mat = new Mat();
+//            Bitmap[] params = {textureView.getBitmap()};
+//            Bitmap bmp32 = params[0].copy(Bitmap.Config.ARGB_8888, true);
+//            Utils.bitmapToMat(bmp32, mat);
+//
+//            mat = mat.t();
+//            Core.flip(mat,mat,0);
+//            Imgproc.resize(mat, mat,new org.opencv.core.Size(mat.height(),mat.width()));
+//
+//            Imgproc.cvtColor(mat,mat, Imgproc.COLOR_RGB2BGR);
+//            Mat drawMat = mat.clone();
+//            Imgproc.resize(mat, mat,new org.opencv.core.Size(mat.width()/Config.scaleSize,mat.height()/Config.scaleSize));
+//            int[] retBall = UtilMatrix.DetectBall(mat,Config.OBJECT_COLOR.ORANGE_BALL, Config.scaleSize);//retBall[0->2]: x,y, and radius respectively
+//            //int[] retBall = UtilMatrix.DetectBall(mat,Config.OBJECT_COLOR.ORANGE_BALL);//retBall[0->2]: x,y, and radius respectively
+////            Log.e("Ryu", "X: " + retBall[0] + " Y:" + retBall[1] + " Rad" + retBall[2] );
+////            beamer.update(retBall[0],retBall[1],retBall[2]);
+//            beamer.beamImmediately(retBall[0]*3/2,retBall[1]*3/2,retBall[2]*3/2, usbService);
+//
+//
+//            if(retBall[0] >0 && retBall[1]>0 && retBall[2]>0)
+//            Imgproc.circle(drawMat,new org.opencv.core.Point((int)retBall[0],(int)retBall[1]),(int)retBall[2],new Scalar(0,255,0),2);
+//
+//            Bitmap bmp = null;
+//            bmp = Bitmap.createBitmap(drawMat.width(),drawMat.height(),Bitmap.Config.RGB_565);
+//            Utils.matToBitmap(drawMat,bmp);
+//            imgView.setImageBitmap(bmp);
+
+            //beamer.DrawDiagonalLine(usbService);
+
+            if(threadCount<10)
+            {
+                threadCount++;
+                new ImageProcess().execute(textureView.getBitmap());
+            }
+        }
+    };
+
+    class ImageProcess extends AsyncTask<Bitmap,Void,Void>
+    {
+        Mat mat = new Mat();
+        Bitmap bmp = null;
+        @Override
+        protected Void doInBackground(Bitmap... params) {
+            Bitmap bmp32 = params[0].copy(Bitmap.Config.ARGB_8888, true);
+            Utils.bitmapToMat(bmp32, mat);
+
+            mat = mat.t();
+            Core.flip(mat,mat,0);
+            Imgproc.resize(mat, mat,new org.opencv.core.Size(mat.height(),mat.width()));
+
+            Imgproc.cvtColor(mat,mat, Imgproc.COLOR_RGB2BGR);
+            Mat drawMat = mat.clone();
+            Mat resizedImg = mat.clone();
+            Imgproc.resize(resizedImg, resizedImg,new org.opencv.core.Size(mat.width()/Config.scaleSize,mat.height()/Config.scaleSize));
+            //Log.e("Ha", "Resized image X: " + resizedImg.width() + " Y:" + resizedImg.height());
+
+            int[] retBall = UtilMatrix.DetectBall(resizedImg,Config.OBJECT_COLOR.ORANGE_BALL);//retBall[0->2]: x,y, and radius respectively
+            //Log.e("Ha", "Detected X: " + retBall[0] + " Y:" + retBall[1] + " Rad" + retBall[2] );
+
+            if(retBall[0] >0 && retBall[1]>0 && retBall[2]>0) {
+                Imgproc.circle(resizedImg, new org.opencv.core.Point(retBall[0],  retBall[1]), retBall[2], new Scalar(0, 255, 0), 2);
+
+                //beamer.beamImmediately(retBall[0]*3/2 * 4,retBall[1]*3/2 * 4,retBall[2]*3/2 *4, usbService);
+                beamer.update(retBall[0]*3/2 * 4,retBall[1]*3/2 * 4,retBall[2]*3/2 *4);
+//                beamer.beam(usbService);
+            }
+//            Mat rangedImage = mat.clone();
+//            Imgproc.cvtColor(rangedImage,rangedImage,Imgproc.COLOR_BGR2HSV);
+//            Mat rangeRes = Mat.zeros(mat.size(), CvType.CV_8UC1);
+//            Scalar hsv_l = new Scalar(30, 50, 87);
+//            Scalar hsv_h = new Scalar(68, 255, 255);
+//            Core.inRange(rangedImage,hsv_l,hsv_h,rangeRes);
+//
+//            Imgproc.erode(rangeRes,rangeRes,Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE,new org.opencv.core.Size(5,5)));
+//            Imgproc.dilate( rangeRes, rangeRes, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new org.opencv.core.Size(5,5)));
+//            Imgproc.dilate( rangeRes, rangeRes, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE,new org.opencv.core.Size(5, 5)) );
+//            Imgproc.erode(rangeRes,rangeRes,Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE,new org.opencv.core.Size(5,5)));
+//
+//            List<MatOfPoint> contours = new ArrayList<MatOfPoint>();Mat hirecy = new Mat();
+//            Imgproc.findContours(rangeRes,contours,hirecy,Imgproc.RETR_EXTERNAL,Imgproc.CHAIN_APPROX_NONE);
+//            Log.e("Ha", "contour size: "+contours.size());
+
+            bmp = Bitmap.createBitmap(resizedImg.width(),resizedImg.height(),Bitmap.Config.RGB_565);
+            Utils.matToBitmap(resizedImg,bmp);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+//            Log.e("Ryu", "den day la ok");
+//            beamer.beam(usbService);
+            imgView.setImageBitmap(bmp);
+            threadCount--;
+            iFrameCount++;
+//            Log.e("Ryu","current "+(iFrameCount*1000/(System.currentTimeMillis()-lastTime)));
         }
     }
+
+    TimerTask timerTask = new TimerTask() {
+        @Override
+        public void run() {
+            if(usbService!=null && !usbService.isWriting)
+            {
+                //beamer.DrawDiagonalLine(usbService);
+                beamer.beam(usbService);
+            }
+        }
+
+    };
 }
